@@ -1,0 +1,135 @@
+esphome:
+    name: che1
+  
+  esp32:
+    board: nodemcu-32s
+    framework:
+      type: arduino
+  
+  # Enable logging
+  logger:
+  
+  globals:
+   - id: led_state
+     type: bool
+     initial_value: "false"
+   - id: u
+     type: bool
+     initial_value: "false"
+   - id: d
+     type: bool
+     initial_value: "false"
+   - id: l
+     type: bool
+     initial_value: "false"
+   - id: r
+     type: bool
+     initial_value: "false"
+   - id: s
+     type: float
+     initial_value: "false"
+  
+  # Enable Home Assistant API
+  mqtt:
+    broker: !secret mqtt_server
+    port: 11883
+    on_message:
+      topic: /guest/che/ping
+      then:
+        - script.execute: control_timeout
+    on_json_message:
+      topic: /guest/che/control
+      then:
+        - lambda: |-
+            id(u) = x["u"];
+            id(d) = x["d"];
+            id(l) = x["l"];
+            id(r) = x["r"];
+            id(s) = x["s"];
+        - script.execute: control
+  ota:
+    password: "0c985d87896e0e107e434c4d26b7830d"
+  improv_serial:
+  wifi:
+    ssid: !secret wifi_ssid
+    password: !secret wifi_password
+  
+    # Enable fallback hotspot (captive portal) in case wifi connection fails
+    ap:
+      ssid: "Che1 Fallback Hotspot"
+      password: "14VtB9nXVmXU"
+  
+  captive_portal:
+  
+  
+  script:
+    - id: control
+      mode: queued
+      then:
+        - lambda: |-
+            ESP_LOGD("on_json_message", "u: %d d: %d l: %d r: %d s: %f led: %d", id(u),id(d),id(l),id(r),id(s),id(led_state));
+            ls->set_level(id(s));
+            rs->set_level(id(s));
+            if(id(u)){
+              if(id(l)){
+                l1->turn_on();
+                r1->turn_off();
+                l2->turn_off();
+                r2->turn_on();
+              } else if(id(r)) {
+                l1->turn_off();
+                r1->turn_on();
+                l2->turn_on();
+                r2->turn_off();
+              } else {
+                l1->turn_on();
+                r1->turn_on();
+                l2->turn_off();
+                r2->turn_off();
+              }
+            } else if(id(d)){
+              l1->turn_off();
+              r1->turn_off();
+              l2->turn_on();
+              r2->turn_on();
+            } else {
+              l1->turn_off();
+              r1->turn_off();
+              l2->turn_off();
+              r2->turn_off();
+            }
+    - id: control_timeout
+      mode: restart
+      then:
+        - delay: 300ms
+        - lambda: |-
+              led->turn_off();
+              l1->turn_off();
+              r1->turn_off();
+              l2->turn_off();
+              r2->turn_off();
+  output:
+    - platform: gpio
+      pin: GPIO2
+      id: led
+  
+    - platform: ledc
+      pin: GPIO33
+      frequency: 1000
+      id: ls
+    - platform: gpio
+      pin: GPIO25
+      id: l2
+    - platform: gpio
+      pin: GPIO26
+      id: l1
+    - platform: gpio
+      pin: GPIO27
+      id: r2
+    - platform: gpio
+      pin: GPIO14
+      id: r1
+    - platform: ledc
+      pin: GPIO12
+      frequency: 1000 Hz
+      id: rs

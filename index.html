@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
+    <title>Document</title>
+  </head>
+  <style>
+    html,
+    body {
+      margin: 0;
+    }
+    .container {
+      display: flex;
+      justify-content: space-evenly;
+      height: 100vh;
+      align-items: center;
+      flex-direction: column;
+    }
+    .group-ud {
+      display: flex;
+      justify-content: center;
+    }
+    .group-lr {
+      display: flex;
+      align-items: center;
+      width: 20rem;
+      flex-direction: column;
+    }
+    .button {
+      width: 10rem;
+      height: 10rem;
+      background-color: antiquewhite;
+      margin: 1rem;
+      transform: rotate(90deg);
+      user-select: none;
+    }
+    .touch {
+      background-color: aquamarine;
+    }
+    canvas {
+      width: 320px;
+      height: 240px;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <div class="group-ud">
+        <br />
+        <button
+          class="button"
+          ontouchstart="touchstart(event,'d')"
+          ontouchend="touchend(event,'d')"
+        >
+          后退
+        </button>
+        <button
+          class="button"
+          ontouchstart="touchstart(event,'u')"
+          ontouchend="touchend(event,'u')"
+        >
+          前进
+        </button>
+      </div>
+
+      <div class="group-lr">
+        <input
+          id="speed"
+          type="range"
+          value="80"
+          min="0"
+          max="100"
+          onchange="speedChange(event.target.value)"
+        />
+        <button
+          class="button"
+          ontouchstart="touchstart(event,'l')"
+          ontouchend="touchend(event,'l')"
+        >
+          左传
+        </button>
+        <button
+          class="button"
+          ontouchstart="touchstart(event,'r')"
+          ontouchend="touchend(event,'r')"
+        >
+          右转
+        </button>
+      </div>
+    </div>
+  </body>
+  <script>
+    const control = {
+      u: false,
+      d: false,
+      l: false,
+      r: false,
+      s: 80,
+    };
+
+    function touchstart(e, val) {
+      e.preventDefault();
+      control[val] = true;
+      e.target.classList.add("touch");
+      sendControl()
+    }
+    function touchend(e, val) {
+      e.preventDefault();
+      control[val] = false;
+      e.target.classList.remove("touch");
+      sendControl()
+    }
+    function speedChange(value) {
+      control.s = Number(value);
+      sendControl()
+    }
+    let ws = null;
+    function sendControl(){
+      const msg=JSON.stringify(control)
+      ws.send(msg);
+    }
+    let interval = 0;
+    function initWebSocket() {
+      const url=(location.protocol==='https:'?'wss://':"ws://") + location.host + "/control_ws"
+      ws = new WebSocket(url)
+      ws.addEventListener("open", () => {     
+        document.querySelectorAll("button.button").forEach(el=> el.disabled = false)
+        interval = setInterval(() => {
+            if(control['u']||control['d']){
+              ws.send(JSON.stringify({p: true}))
+            }
+        }, 200);
+      });
+      ws.addEventListener("close", (err) => {
+        document.querySelectorAll("button.button").forEach(el=> el.disabled = false)
+        clearInterval(interval) 
+        console.log("连接中断", err);
+        setTimeout(initWebSocket, 500);
+      });
+    }
+    initWebSocket();
+  </script>
+</html>
