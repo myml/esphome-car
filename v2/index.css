@@ -1,5 +1,6 @@
 body {
   margin: 0;
+  user-select: none;
 }
 button {
   width: 10rem;
@@ -10,21 +11,27 @@ button {
   transform: rotate(90deg);
   user-select: none;
 }
-button:active {
+.touch {
   background-color: aquamarine;
 }
 
 esp-app {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   height: 100vh;
   align-items: center;
   flex-direction: column;
+  background-position-y: 12rem;
+  background-repeat: no-repeat;
+  background-size: 100%;
 }
-
 .c2 {
   display: flex;
   align-items: center;
   width: 20rem;
   flex-direction: column;
+}
+.c2 > button {
+  width: 8rem;
+  height: 8rem;
 }
