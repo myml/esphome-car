@@ -1,6 +1,6 @@
 esphome:
   name: car2
-
+  
 esp32:
   board: esp32dev
   framework:
@@ -16,15 +16,10 @@ ota:
   password: "d1f4b73f59db13a41f17db03b6be18a6"
 
 wifi:
-  ssid: !secret wifi_ssid
-  password: !secret wifi_password
-
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
-    ssid: "Car2 Fallback Hotspot"
-    password: "PKFVTZTVQR9f"
-
-captive_portal:
+    ssid: "car2"
+    password: "wu123456"
 
 switch:
   - platform: template
@@ -43,6 +38,7 @@ switch:
     id: right
     name: right
     optimistic: true
+    
 number:
   - platform: template
     id: "speed"
@@ -50,10 +46,10 @@ number:
     optimistic: true
     min_value: 0
     max_value: 100
+    step: 1
     on_value:
       then:
         - script.execute: control
-    step: 1
 button:
   - platform: template
     id: "running"
@@ -106,7 +102,7 @@ script:
                             float level = id(speed).state/100;
                             ls->set_level(level);
                             rs->set_level(level);
-            - delay: 500ms
+            - delay: 1000ms
       - output.set_level:
           id: ls
           level: 0
@@ -116,8 +112,8 @@ script:
 
 web_server:
   port: 80
-  js_url: "https://myml.dev/esphome-car/v2/index.js"
-  css_url: "https://myml.dev/esphome-car/v2/index.css"
+  js_include: "index.js"
+  css_include: "index.css"
 
 esp32_camera:
   external_clock:
@@ -135,7 +131,7 @@ esp32_camera:
   vertical_flip: false
   resolution: 320x240
   idle_framerate: 0.01fps
-
+  
 esp32_camera_web_server:
   - port: 8081
     mode: stream
